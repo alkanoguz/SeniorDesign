@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="56dp"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:background="@color/LightGrey">
+
+
+
+        <!-- Email Label -->
+
+        <EditText android:id="@+id/login_input_tckimlik"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:textColor="@color/White"
+            android:textColorHighlight="@color/White"
+            android:shadowColor="@color/White"
+            android:textColorLink="@color/White"
+            android:textAlignment="center"
+            android:hint="Tc Kimlik" />
+
+
+        <!-- Password Label -->
+
+        <EditText android:id="@+id/login_input_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:textAlignment="center"
+            android:hint="Şifre"/>
+
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/btn_login"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"
+            android:padding="12dp"
+            android:background="@color/White"
+            android:textColor="@color/red"
+            android:textAlignment="center"
+            android:text="Giriş Yap"/>
+
+        <TextView android:id="@+id/register_tv"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="Hesabınız yok mu? Oluşturmak için tıklayın"
+            android:gravity="center"
+            android:textSize="16dip"/>
+        <TextView android:id="@+id/deneme2_tv"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="Deneme"
+            android:gravity="center"
+            android:textSize="16dip"/>
+
+
+    </LinearLayout>
+</RelativeLayout>
