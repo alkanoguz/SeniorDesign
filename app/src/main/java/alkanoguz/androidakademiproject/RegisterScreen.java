@@ -61,7 +61,7 @@ public class RegisterScreen extends Activity {
         final Editable mobile_phone = et_mobile_phone.getText();
         final Editable address = et_address.getText();
 
-
+        int sasasa;
 
         btn_register.setOnClickListener(new View.OnClickListener() {
             @Override
