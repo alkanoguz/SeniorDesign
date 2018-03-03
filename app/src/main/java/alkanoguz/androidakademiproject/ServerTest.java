@@ -83,17 +83,17 @@ public class ServerTest extends Activity{
 
                 JSONObject main2 = new JSONObject();
                 try {
-                    main.put("name","Sevgül");
+                    main.put("name","Oğuz");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
                 try {
-                    main.put("surname","Sönmez");
+                    main.put("surname","Alkan");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
                 try {
-                    main.put("url","aylavyu");
+                    main.put("url","blabla");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }

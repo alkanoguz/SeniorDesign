@@ -1,158 +1,89 @@
 package alkanoguz.androidakademiproject;
 
+        import android.app.Activity;
+        import android.content.Context;
+        import android.content.ContextWrapper;
+        import android.database.Cursor;
+        import android.graphics.BitmapFactory;
+        import android.hardware.Camera;
+        import android.os.Environment;
+        import android.support.v4.app.ActivityCompat;
+        import android.support.v7.app.AppCompatActivity;
+        import android.Manifest;
+        import android.content.Intent;
+        import android.content.pm.PackageManager;
+        import android.util.Log;
+        import android.widget.Button;
+        import android.widget.ImageView;
+        import android.widget.Toast;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.hardware.Camera;
-import android.hardware.Camera.PictureCallback;
-import android.hardware.Camera.ShutterCallback;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Environment;
-import android.util.Log;
-import android.view.SurfaceView;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.RelativeLayout;
-import android.widget.Toast;
+        import java.io.File;
+        import java.io.FileNotFoundException;
+        import java.io.FileOutputStream;
+        import java.net.HttpURLConnection;
+        import android.graphics.Bitmap;
+        import android.os.Bundle;
+        import android.view.View;
+        import android.app.ProgressDialog;
+        import android.os.AsyncTask;
+        import android.widget.EditText;
+        import android.net.Uri;
+        import java.io.InputStreamReader;
+        import java.io.OutputStream;
+        import javax.net.ssl.HttpsURLConnection;
+        import java.io.BufferedWriter;
+        import java.nio.ByteBuffer;
+        import java.text.SimpleDateFormat;
+        import java.util.Date;
+        import java.util.Map;
+        import java.io.ByteArrayOutputStream;
+        import java.io.IOException;
+        import java.util.HashMap;
+        import java.io.OutputStreamWriter;
+        import java.net.URL;
+        import android.provider.MediaStore;
+        import java.io.BufferedReader;
+        import java.net.URLEncoder;
+        import java.io.UnsupportedEncodingException;
+        import android.util.Base64;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+        import static alkanoguz.androidakademiproject.AppController.TAG;
 
 public class CamTestActivity extends Activity {
     private static final String TAG = "CamTestActivity";
-    Preview preview;
-    Button buttonClick;
+    private static final int CAMERA_REQUEST = 1888;
+    private ImageView imageView;
     Camera camera;
-    Activity act;
     Context ctx;
-    Button button;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ctx = this;
-        act = this;
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         setContentView(R.layout.activity_main);
-        button = findViewById(R.id.take_picture_button);
-        button.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-            }
-        });
-        preview = new Preview(this, (SurfaceView)findViewById(R.id.surfaceView));
-        preview.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-        ((RelativeLayout) findViewById(R.id.layout)).addView(preview);
-        preview.setKeepScreenOn(true);
+        this.imageView = (ImageView) this.findViewById(R.id.imageView);
+        Button photoButton = (Button) this.findViewById(R.id.button);
 
-        preview.setOnClickListener(new OnClickListener() {
+        photoButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
-            public void onClick(View arg0) {
-                camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+            public void onClick(View v) {
+
+                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(cameraIntent, CAMERA_REQUEST);
             }
         });
-
-        Toast.makeText(ctx, getString(R.string.take_photo_help), Toast.LENGTH_LONG).show();
-
-        //		buttonClick = (Button) findViewById(R.id.btnCapture);
-        //
-        //		buttonClick.setOnClickListener(new OnClickListener() {
-        //			public void onClick(View v) {
-        ////				preview.camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-        //				camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-        //			}
-        //		});
-        //
-        //		buttonClick.setOnLongClickListener(new OnLongClickListener(){
-        //			@Override
-        //			public boolean onLongClick(View arg0) {
-        //				camera.autoFocus(new AutoFocusCallback(){
-        //					@Override
-        //					public void onAutoFocus(boolean arg0, Camera arg1) {
-        //						//camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-        //					}
-        //				});
-        //				return true;
-        //			}
-        //		});
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        int numCams = Camera.getNumberOfCameras();
-        if(numCams > 0){
-            try{
-                camera = Camera.open(0);
-                camera.startPreview();
-                preview.setCamera(camera);
-            } catch (RuntimeException ex){
-                Toast.makeText(ctx, getString(R.string.camera_not_found), Toast.LENGTH_LONG).show();
-            }
-        }
-    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
+            Bitmap bmp = (Bitmap) data.getExtras().get("data");
+            imageView.setImageBitmap(bmp);
 
-    @Override
-    protected void onPause() {
-        if(camera != null) {
-            camera.stopPreview();
-            preview.setCamera(null);
-            camera.release();
-            camera = null;
-        }
-        super.onPause();
-    }
 
-    private void resetCam() {
-        camera.startPreview();
-        preview.setCamera(camera);
-    }
 
-    private void refreshGallery(File file) {
-        Intent mediaScanIntent = new Intent( Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        mediaScanIntent.setData(Uri.fromFile(file));
-        sendBroadcast(mediaScanIntent);
-    }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.JPEG, 10, baos);
+            byte[] b = baos.toByteArray();
 
-    ShutterCallback shutterCallback = new ShutterCallback() {
-        public void onShutter() {
-            //			 Log.d(TAG, "onShutter'd");
-        }
-    };
-
-    PictureCallback rawCallback = new PictureCallback() {
-        public void onPictureTaken(byte[] data, Camera camera) {
-            //			 Log.d(TAG, "onPictureTaken - raw");
-        }
-    };
-
-    PictureCallback jpegCallback = new PictureCallback() {
-        public void onPictureTaken(byte[] data, Camera camera) {
-            new SaveImageTask().execute(data);
-            resetCam();
-            Log.d(TAG, "onPictureTaken - jpeg");
-        }
-    };
-
-    private class SaveImageTask extends AsyncTask<byte[], Void, Void> {
-
-        @Override
-        protected Void doInBackground(byte[]... data) {
             FileOutputStream outStream = null;
 
             // Write to SD Card
@@ -166,21 +97,32 @@ public class CamTestActivity extends Activity {
                 File outFile = new File(dir, fileName);
 
                 outStream = new FileOutputStream(outFile);
-                outStream.write(data[0]);
+                outStream.write(b);
                 outStream.flush();
                 outStream.close();
 
-                Log.d(TAG, "onPictureTaken - wrote bytes: " + data.length + " to " + outFile.getAbsolutePath());
+                Log.d(TAG, "onPictureTaken - wrote bytes: " + b.length + " to " + outFile.getAbsolutePath());
 
                 refreshGallery(outFile);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
             }
-            return null;
+             catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+
         }
 
     }
+
+    private void refreshGallery(File file) {
+        Intent mediaScanIntent = new Intent( Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        mediaScanIntent.setData(Uri.fromFile(file));
+        sendBroadcast(mediaScanIntent);
+    }
+
+
 }
+
