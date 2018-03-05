@@ -53,14 +53,26 @@ public class CamTestActivity extends Activity {
     private static final String TAG = "CamTestActivity";
     private static final int CAMERA_REQUEST = 1888;
     private ImageView imageView;
-    Camera camera;
-    Context ctx;
+    Button UploadImageToServer;
+    Bitmap bmp;
+    boolean check = true;
+    ProgressDialog progressDialog ;
+    String ImageNameFieldOnServer = "image_name" ;
+
+    String ImagePathFieldOnServer = "image_path" ;
+
+
+    String ImageUploadPathOnSever ="http://192.168.1.5/php/upload.php" ;
+    String filePath;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         this.imageView = (ImageView) this.findViewById(R.id.imageView);
         Button photoButton = (Button) this.findViewById(R.id.button);
+        UploadImageToServer = (Button) findViewById(R.id.button2);
+
+
 
         photoButton.setOnClickListener(new View.OnClickListener() {
 
@@ -71,58 +83,202 @@ public class CamTestActivity extends Activity {
                 startActivityForResult(cameraIntent, CAMERA_REQUEST);
             }
         });
-    }
+        UploadImageToServer.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                ImageUploadToServerFunction();
+            }
+        });
+
+
+        }
+
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
-            Bitmap bmp = (Bitmap) data.getExtras().get("data");
+            bmp = (Bitmap) data.getExtras().get("data");
             imageView.setImageBitmap(bmp);
+            SaveImageSD(bmp);
 
 
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bmp.compress(Bitmap.CompressFormat.JPEG, 10, baos);
-            byte[] b = baos.toByteArray();
-
-            FileOutputStream outStream = null;
-
-            // Write to SD Card
-            try {
-                File sdCard = Environment.getExternalStorageDirectory();
-                File dir = new File (sdCard.getAbsolutePath() + "/camtest");
-                dir.mkdirs();
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmdd_hhmmss");
-                String date = dateFormat.format(new Date());
-                String fileName = "IMG_" + date + ".jpg";
-                File outFile = new File(dir, fileName);
-
-                outStream = new FileOutputStream(outFile);
-                outStream.write(b);
-                outStream.flush();
-                outStream.close();
-
-                Log.d(TAG, "onPictureTaken - wrote bytes: " + b.length + " to " + outFile.getAbsolutePath());
-
-                refreshGallery(outFile);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-             catch (IOException e) {
-                e.printStackTrace();
-            }
 
 
 
         }
 
     }
+    public void SaveImageSD(Bitmap bmp) {
+        FileOutputStream outStream = null;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] b = baos.toByteArray();
+        final String ConvertImage = Base64.encodeToString(b, Base64.DEFAULT);
+
+        // Write to SD Card
+        try {
+            File sdCard = Environment.getExternalStorageDirectory();
+            File dir = new File (sdCard.getAbsolutePath() + "/camtest");
+            dir.mkdirs();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmdd_hhmmss");
+            String date = dateFormat.format(new Date());
+            String fileName = "IMG_" + date + ".jpg";
+            File outFile = new File(dir, fileName);
+
+            outStream = new FileOutputStream(outFile);
+            outStream.write(b);
+            outStream.flush();
+            outStream.close();
+
+            Log.d(TAG, "onPictureTaken - wrote bytes: " + b.length + " to " + outFile.getAbsolutePath());
+
+            refreshGallery(outFile);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
     private void refreshGallery(File file) {
         Intent mediaScanIntent = new Intent( Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
         mediaScanIntent.setData(Uri.fromFile(file));
         sendBroadcast(mediaScanIntent);
     }
+    public void ImageUploadToServerFunction(){
 
+        ByteArrayOutputStream byteArrayOutputStreamObject ;
 
+        byteArrayOutputStreamObject = new ByteArrayOutputStream();
+
+        // Converting bitmap image to jpeg format, so by default image will upload in jpeg format.
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStreamObject);
+
+        byte[] byteArrayVar = byteArrayOutputStreamObject.toByteArray();
+
+        final String ConvertImage = Base64.encodeToString(byteArrayVar, Base64.DEFAULT);
+
+        Log.d(TAG, ConvertImage);
+
+        class AsyncTaskUploadClass extends AsyncTask<Void,Void,String> {
+
+            @Override
+            protected String doInBackground(Void... params) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmdd_hhmmss");
+
+                String date = dateFormat.format(new Date());
+
+                ImageProcessClass imageProcessClass = new ImageProcessClass();
+
+                HashMap<String,String> HashMapParams = new HashMap<String,String>();
+
+                HashMapParams.put(ImageNameFieldOnServer, "IMG_" + date + ".jpg");
+
+                HashMapParams.put(ImagePathFieldOnServer, ConvertImage);
+
+                String FinalData = imageProcessClass.ImageHttpRequest(ImageUploadPathOnSever, HashMapParams);
+
+                return FinalData;
+            }
+        }
+        AsyncTaskUploadClass AsyncTaskUploadClassOBJ = new AsyncTaskUploadClass();
+
+        AsyncTaskUploadClassOBJ.execute();
+    }
+
+    public class ImageProcessClass{
+
+        public String ImageHttpRequest(String requestURL,HashMap<String, String> PData) {
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            try {
+
+                URL url;
+                HttpURLConnection httpURLConnectionObject ;
+                OutputStream OutPutStream;
+                BufferedWriter bufferedWriterObject ;
+                BufferedReader bufferedReaderObject ;
+                int RC ;
+
+                url = new URL(requestURL);
+
+                httpURLConnectionObject = (HttpURLConnection) url.openConnection();
+
+                httpURLConnectionObject.setReadTimeout(19000);
+
+                httpURLConnectionObject.setConnectTimeout(19000);
+
+                httpURLConnectionObject.setRequestMethod("POST");
+
+                httpURLConnectionObject.setDoInput(true);
+
+                httpURLConnectionObject.setDoOutput(true);
+
+                OutPutStream = httpURLConnectionObject.getOutputStream();
+
+                bufferedWriterObject = new BufferedWriter(
+
+                        new OutputStreamWriter(OutPutStream, "UTF-8"));
+
+                bufferedWriterObject.write(bufferedWriterDataFN(PData));
+
+                bufferedWriterObject.flush();
+
+                bufferedWriterObject.close();
+
+                OutPutStream.close();
+
+                RC = httpURLConnectionObject.getResponseCode();
+
+                if (RC == HttpsURLConnection.HTTP_OK) {
+
+                    bufferedReaderObject = new BufferedReader(new InputStreamReader(httpURLConnectionObject.getInputStream()));
+
+                    stringBuilder = new StringBuilder();
+
+                    String RC2;
+
+                    while ((RC2 = bufferedReaderObject.readLine()) != null){
+
+                        stringBuilder.append(RC2);
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return stringBuilder.toString();
+        }
+
+        private String bufferedWriterDataFN(HashMap<String, String> HashMapParams) throws UnsupportedEncodingException {
+
+            StringBuilder stringBuilderObject;
+
+            stringBuilderObject = new StringBuilder();
+
+            for (Map.Entry<String, String> KEY : HashMapParams.entrySet()) {
+
+                if (check)
+
+                    check = false;
+                else
+                    stringBuilderObject.append("&");
+
+                stringBuilderObject.append(URLEncoder.encode(KEY.getKey(), "UTF-8"));
+
+                stringBuilderObject.append("=");
+
+                stringBuilderObject.append(URLEncoder.encode(KEY.getValue(), "UTF-8"));
+            }
+
+            return stringBuilderObject.toString();
+        }
+
+    }
 }
 
