@@ -156,11 +156,14 @@ public class CamTestActivity extends Activity {
         byteArrayOutputStreamObject = new ByteArrayOutputStream();
 
         // Converting bitmap image to jpeg format, so by default image will upload in jpeg format.
+        bmp = Bitmap.createScaledBitmap(bmp, 1024, 768, true);
         bmp.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStreamObject);
 
         byte[] byteArrayVar = byteArrayOutputStreamObject.toByteArray();
 
         final String ConvertImage = Base64.encodeToString(byteArrayVar, Base64.DEFAULT);
+
+
 
         Log.d(TAG, ConvertImage);
 
