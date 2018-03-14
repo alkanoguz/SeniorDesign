@@ -49,12 +49,14 @@ package alkanoguz.androidakademiproject;
 
         import static alkanoguz.androidakademiproject.AppController.TAG;
 
-public class CamTestActivity extends Activity {
+public class CamTestActivity extends AppCompatActivity {
     private static final String TAG = "CamTestActivity";
     private static final int CAMERA_REQUEST = 1888;
+    private static final int GALLERY_REQUEST=1777;
     private ImageView imageView;
     Button UploadImageToServer;
     Bitmap bmp;
+    Uri uri;
     boolean check = true;
     ProgressDialog progressDialog ;
     String ImageNameFieldOnServer = "image_name" ;
@@ -62,7 +64,7 @@ public class CamTestActivity extends Activity {
     String ImagePathFieldOnServer = "image_path" ;
 
 
-    String ImageUploadPathOnSever ="http://192.168.1.5/php/upload.php" ;
+    String ImageUploadPathOnSever ="http://192.168.1.2/php/upload.php" ;
     String filePath;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -71,6 +73,16 @@ public class CamTestActivity extends Activity {
         this.imageView = (ImageView) this.findViewById(R.id.imageView);
         Button photoButton = (Button) this.findViewById(R.id.button);
         UploadImageToServer = (Button) findViewById(R.id.button2);
+        Button mapsButton = this.findViewById(R.id.button4);
+        Button SelectImageGallery = this.findViewById(R.id.button3);
+        EnableRuntimePermissionToAccessCamera();
+        mapsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent mapIntent = new Intent(getApplicationContext(),MapsActivity.class);
+                startActivity(mapIntent);
+            }
+        });
 
 
 
@@ -87,32 +99,86 @@ public class CamTestActivity extends Activity {
 
             @Override
             public void onClick(View v) {
+                if (bmp == null){
+                    Toast.makeText(getApplicationContext(), "Resim Seçiniz", Toast.LENGTH_LONG).show();
+                }
+                else {
                 ImageUploadToServerFunction();
+                imageView.setImageBitmap(null);
+                bmp = null;
+            }}
+        });
+        SelectImageGallery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intent = new Intent();
+
+                intent.setType("image/*");
+
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+
+                startActivityForResult(intent, GALLERY_REQUEST);
+
             }
         });
 
 
-        }
+
+    }
 
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
+
             bmp = (Bitmap) data.getExtras().get("data");
             imageView.setImageBitmap(bmp);
             SaveImageSD(bmp);
-
-
-
-
-
         }
 
+        if (requestCode == GALLERY_REQUEST) {
+            uri = data.getData();
+
+            try {
+
+                bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+
+                imageView.setImageBitmap(bmp);
+
+            } catch (IOException e) {
+
+                e.printStackTrace();
+            }
+        }
     }
+
+    public void EnableRuntimePermissionToAccessCamera() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(CamTestActivity.this,
+                Manifest.permission.CAMERA)) {
+
+            // Printing toast message after enabling runtime permission.
+            Toast.makeText(CamTestActivity.this, "CAMERA permission allows us to Access CAMERA app", Toast.LENGTH_LONG).show();
+
+        } else {
+
+            ActivityCompat.requestPermissions(CamTestActivity.this, new String[]{Manifest.permission.CAMERA}, 1);
+
+        }
+    }
+
+
+
+
+
+
+
+
+
     public void SaveImageSD(Bitmap bmp) {
         FileOutputStream outStream = null;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, baos);
         byte[] b = baos.toByteArray();
         final String ConvertImage = Base64.encodeToString(b, Base64.DEFAULT);
 
@@ -137,6 +203,7 @@ public class CamTestActivity extends Activity {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
         catch (IOException e) {
             e.printStackTrace();
         }
@@ -156,8 +223,9 @@ public class CamTestActivity extends Activity {
         byteArrayOutputStreamObject = new ByteArrayOutputStream();
 
         // Converting bitmap image to jpeg format, so by default image will upload in jpeg format.
-        bmp = Bitmap.createScaledBitmap(bmp, 1024, 768, true);
-        bmp.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStreamObject);
+
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStreamObject);
+
 
         byte[] byteArrayVar = byteArrayOutputStreamObject.toByteArray();
 
@@ -283,5 +351,24 @@ public class CamTestActivity extends Activity {
         }
 
     }
+    public void onRequestPermissionsResult(int RC, String per[], int[] PResult) {
+
+        switch (RC) {
+
+            case 1:
+
+                if (PResult.length > 0 && PResult[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    Toast.makeText(CamTestActivity.this,"Permission Granted, Now your application can access CAMERA.", Toast.LENGTH_LONG).show();
+
+                } else {
+
+                    Toast.makeText(CamTestActivity.this,"Permission Canceled, Now your application cannot access CAMERA.", Toast.LENGTH_LONG).show();
+
+                }
+                break;
+        }
+    }
+
 }
 
