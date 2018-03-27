@@ -15,6 +15,7 @@ package alkanoguz.androidakademiproject;
         import android.util.Log;
         import android.widget.Button;
         import android.widget.ImageView;
+        import android.widget.TextView;
         import android.widget.Toast;
 
         import java.io.File;
@@ -47,9 +48,11 @@ package alkanoguz.androidakademiproject;
         import java.io.UnsupportedEncodingException;
         import android.util.Base64;
 
+        import org.w3c.dom.Text;
+
         import static alkanoguz.androidakademiproject.AppController.TAG;
 
-public class CamTestActivity extends AppCompatActivity {
+public class CamTestActivity extends Activity {
     private static final String TAG = "CamTestActivity";
     private static final int CAMERA_REQUEST = 1888;
     private static final int GALLERY_REQUEST=1777;
@@ -60,11 +63,20 @@ public class CamTestActivity extends AppCompatActivity {
     boolean check = true;
     ProgressDialog progressDialog ;
     String ImageNameFieldOnServer = "image_name" ;
-
+    HashMap hashMap;
     String ImagePathFieldOnServer = "image_path" ;
+    TextView textView;
+    String adres;
+    double lat;
+    double lng;
+    String lats;
+    String lngs;
+    EditText editText;
+    String mesaj;
+    HashMap<String,String> HashMapParams = new HashMap<String,String>();
 
 
-    String ImageUploadPathOnSever ="http://192.168.1.2/php/upload.php" ;
+    String ImageUploadPathOnSever ="http://192.168.1.5/php/upload.php" ;
     String filePath;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,12 +87,28 @@ public class CamTestActivity extends AppCompatActivity {
         UploadImageToServer = (Button) findViewById(R.id.button2);
         Button mapsButton = this.findViewById(R.id.button4);
         Button SelectImageGallery = this.findViewById(R.id.button3);
+        textView = this.findViewById(R.id.textView);
+        editText = this.findViewById(R.id.editText);
+        Intent intent = getIntent();
+
+        if (intent.getStringExtra("adres")!=null) {
+            adres = intent.getStringExtra("adres");
+            lat = intent.getDoubleExtra("lat", 0);
+            lng = intent.getDoubleExtra("lng", 0);
+            lngs = Double.toString(lng);
+            lats = Double.toString(lat);
+
+
+
+            textView.setText(adres+"\n"+lats+"\n"+lngs);
+        }
         EnableRuntimePermissionToAccessCamera();
         mapsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 Intent mapIntent = new Intent(getApplicationContext(),MapsActivity.class);
-                startActivity(mapIntent);
+                startActivityForResult(mapIntent,49);
             }
         });
 
@@ -99,13 +127,26 @@ public class CamTestActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
+                mesaj = editText.getText().toString();
                 if (bmp == null){
                     Toast.makeText(getApplicationContext(), "Resim Seçiniz", Toast.LENGTH_LONG).show();
                 }
+                else if ((mesaj.length() == 0)){
+
+                    Toast.makeText(getApplicationContext(), "Mesaj yazınız", Toast.LENGTH_LONG).show();
+                }
+                else if (adres == null){
+
+                    Toast.makeText(getApplicationContext(), "Konum Seçiniz", Toast.LENGTH_LONG).show();
+                }
                 else {
-                ImageUploadToServerFunction();
-                imageView.setImageBitmap(null);
-                bmp = null;
+
+                    ImageUploadToServerFunction();
+                    imageView.setImageBitmap(null);
+                    bmp = null;
+                    textView = null;
+                    editText = null;
+
             }}
         });
         SelectImageGallery.setOnClickListener(new View.OnClickListener() {
@@ -139,7 +180,6 @@ public class CamTestActivity extends AppCompatActivity {
 
         if (requestCode == GALLERY_REQUEST) {
             uri = data.getData();
-
             try {
 
                 bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
@@ -151,14 +191,13 @@ public class CamTestActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-    }
+     }
 
     public void EnableRuntimePermissionToAccessCamera() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(CamTestActivity.this,
                 Manifest.permission.CAMERA)) {
 
-            // Printing toast message after enabling runtime permission.
-            Toast.makeText(CamTestActivity.this, "CAMERA permission allows us to Access CAMERA app", Toast.LENGTH_LONG).show();
+
 
         } else {
 
@@ -197,7 +236,6 @@ public class CamTestActivity extends AppCompatActivity {
             outStream.flush();
             outStream.close();
 
-            Log.d(TAG, "onPictureTaken - wrote bytes: " + b.length + " to " + outFile.getAbsolutePath());
 
             refreshGallery(outFile);
         } catch (FileNotFoundException e) {
@@ -226,14 +264,11 @@ public class CamTestActivity extends AppCompatActivity {
 
         bmp.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStreamObject);
 
-
         byte[] byteArrayVar = byteArrayOutputStreamObject.toByteArray();
 
         final String ConvertImage = Base64.encodeToString(byteArrayVar, Base64.DEFAULT);
 
 
-
-        Log.d(TAG, ConvertImage);
 
         class AsyncTaskUploadClass extends AsyncTask<Void,Void,String> {
 
@@ -245,8 +280,10 @@ public class CamTestActivity extends AppCompatActivity {
 
                 ImageProcessClass imageProcessClass = new ImageProcessClass();
 
-                HashMap<String,String> HashMapParams = new HashMap<String,String>();
-
+                HashMapParams.put("adres",adres);
+                HashMapParams.put("Latitude",lats);
+                HashMapParams.put("Longtitude",lngs);
+                HashMapParams.put("Mesaj",mesaj);
                 HashMapParams.put(ImageNameFieldOnServer, "IMG_" + date + ".jpg");
 
                 HashMapParams.put(ImagePathFieldOnServer, ConvertImage);
@@ -294,7 +331,7 @@ public class CamTestActivity extends AppCompatActivity {
 
                 bufferedWriterObject = new BufferedWriter(
 
-                        new OutputStreamWriter(OutPutStream, "UTF-8"));
+                        new OutputStreamWriter(OutPutStream));
 
                 bufferedWriterObject.write(bufferedWriterDataFN(PData));
 
@@ -359,11 +396,10 @@ public class CamTestActivity extends AppCompatActivity {
 
                 if (PResult.length > 0 && PResult[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    Toast.makeText(CamTestActivity.this,"Permission Granted, Now your application can access CAMERA.", Toast.LENGTH_LONG).show();
 
                 } else {
 
-                    Toast.makeText(CamTestActivity.this,"Permission Canceled, Now your application cannot access CAMERA.", Toast.LENGTH_LONG).show();
+
 
                 }
                 break;

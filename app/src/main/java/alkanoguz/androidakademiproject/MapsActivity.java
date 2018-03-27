@@ -1,8 +1,12 @@
 package alkanoguz.androidakademiproject;
 
 import android.Manifest;
+import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -11,6 +15,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -19,11 +24,19 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnMapLongClickListener {
 
     private GoogleMap mMap;
     LocationManager locationManager;
     LocationListener locationListener;
+    String address = "";
+    double lat;
+    double lng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,14 +47,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setOnMapLongClickListener(this);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-
+                LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
             }
 
             @Override
@@ -59,25 +75,84 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         };
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this,new String[] {Manifest.permission.ACCESS_FINE_LOCATION},1);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         } else {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1,1,locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, locationListener);
+            mMap.clear();
+            Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if(lastLocation != null){
+                double latitude = lastLocation.getLatitude();
+                double longitude = lastLocation.getLongitude();
+                LatLng lastuserLocation = new LatLng(latitude,longitude);
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastuserLocation, 15));
+            }
+
+
         }
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults.length > 0 ) {
-            if (ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1,1,locationListener);
+        if (grantResults.length > 0) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 100, locationListener);
+                mMap.clear();
+                Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                LatLng lastuserLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastuserLocation, 15));
+            }
         }
+    }
+
+    @Override
+    public void onMapLongClick(LatLng latLng) {
+        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+        HashMap hashMap = new HashMap();
+        mMap.clear();
+        try {
+
+            List<Address> addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+
+            if (addressList != null && addressList.size() > 0) {
+                if (addressList.get(0).getAddressLine(0) != null) {
+                    address += addressList.get(0).getAddressLine(0);
+                }
+                if (addressList.get(0).getAddressLine(1) != null) {
+                    address += " " + addressList.get(0).getAddressLine(1);
+                }
+                if (addressList.get(0).getAddressLine(2) != null) {
+                    address += " " + addressList.get(0).getAddressLine(2);
+                }
+                if (addressList.get(0).getAddressLine(3) != null) {
+                    address += " " + addressList.get(0).getAddressLine(3);
+                }
+
+
+                hashMap.put("Addressss", address);
+                System.out.println(hashMap);
+            } else {
+                address = "New Place";
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        mMap.addMarker(new MarkerOptions().position(latLng).title(address));
+        Toast.makeText(getApplicationContext(), "New Place Created", Toast.LENGTH_LONG).show();
+        lat = latLng.latitude;
+        lng = latLng.longitude;
+
+        System.out.println(latLng.latitude);
+        System.out.println(latLng.longitude);
+        System.out.println(address);
+        Intent intent = new Intent(this, CamTestActivity.class);
+        intent.putExtra("adres", address);
+        intent.putExtra("lat", lat);
+        intent.putExtra("lng", lng);
+        startActivity(intent);
+        finish();
+
     }
 }
