@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/White">
     <!--  <ImageView
           android:id="@+id/img_logo"
           android:layout_width="wrap_content"
@@ -14,9 +15,11 @@
         android:id="@+id/my_progress_bar"
         android:layout_width="100dp"
         android:layout_height="match_parent"
-        android:layout_gravity="center_horizontal|center_vertical"
+        android:indeterminate="true"
+
+        android:indeterminateDrawable="@drawable/ic_launcher"
 
 
-        />
+        android:layout_gravity="center_horizontal|center_vertical" />
 
 </LinearLayout>

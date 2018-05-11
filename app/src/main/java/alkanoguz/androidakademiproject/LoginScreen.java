@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
@@ -35,6 +36,8 @@ public class LoginScreen extends Activity {
     SharedPreferences pref;
     SharedPreferences.Editor editor;
     RequestQueue queue;
+    String name,surname;
+    String uid;
     private Context mContext;
 
     @Override
@@ -102,7 +105,6 @@ public class LoginScreen extends Activity {
                 Log.d("Response", response.toString());
                 JSONObject data = response;
                 JSONObject information = new JSONObject();
-                String name = new String();
                 try {
                     information = data.getJSONObject("message");
                 } catch (JSONException e) {
@@ -114,8 +116,37 @@ public class LoginScreen extends Activity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                try {
+                    uid = information.getString("uid");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    surname = information.getString("surname");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
                 deneme_tv.setText("Hoşgeldiniz " + name);
+                Toast.makeText(getApplicationContext(),"Hoşgeldin " + name +" "+ surname, Toast.LENGTH_LONG).show();
+                if(name != null) {
+                    SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.putBoolean("is_login", true);
+                    editor.putString("name", name);
+                    editor.putString("uid",uid);
+                    editor.putString("surname",surname);
+                    editor.apply();
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            Intent i = new Intent(LoginScreen.this,ServerTest.class);
+                            startActivity(i);
+                            finish();
+                        }
+                    },3000);
+
+                }
 
             }
         }, new Response.ErrorListener() {
@@ -123,8 +154,8 @@ public class LoginScreen extends Activity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d("Error", error.toString());
-                Toast.makeText(getApplicationContext(), error.toString(), Toast.LENGTH_LONG).show();
-                deneme_tv.setText(error.toString());
+                Toast.makeText(getApplicationContext(), "Hatalı Giriş. Tekrar Deneyin !", Toast.LENGTH_LONG).show();
+
             }
 
         });

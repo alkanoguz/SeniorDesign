@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<android.support.constraint.RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="420dp"
+    android:layout_height="300dp">
+
     <com.google.android.maps.MapView
 
         android:id="@+id/mapview"
@@ -10,4 +11,4 @@
         android:layout_height="fill_parent"
         android:apiKey="AIzaSyBTQs9cPdv71ivIsgabVaQ2mrir6p1UozI"
         android:clickable="true" />
-</android.support.constraint.ConstraintLayout>
+</android.support.constraint.RelativeLayout>

@@ -99,31 +99,23 @@
             android:textAlignment="center"
             android:textColor="@color/red" />
 
+        <CheckBox
+            android:id="@+id/checkBox3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:text="Sözleşmeyi kabul ediyorum." />
+
         <TextView
             android:id="@+id/login_tv"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="0dp"
             android:gravity="center"
             android:text="Zaten hesabınız var mı? Giriş yapın."
             android:textSize="16dip" />
-        <TextView android:id="@+id/deneme_tv"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:text="Deneme"
-            android:gravity="center"
-            android:textSize="16dip"/>
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-        </ScrollView>
 
     </LinearLayout>
+
 </RelativeLayout>

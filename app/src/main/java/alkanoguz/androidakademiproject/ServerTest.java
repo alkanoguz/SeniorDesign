@@ -1,10 +1,15 @@
 package alkanoguz.androidakademiproject;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
+import android.widget.AdapterView.OnItemClickListener;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -23,115 +28,162 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.ArrayList;
+import java.util.List;
 
-public class ServerTest extends Activity{
-    Button button_send,button_send_json;
-    EditText editText;
-    TextView message_sent,message_received;
-    String post_url =  "http://192.168.1.10/php/index.php";
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-    RequestQueue queue ;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonArrayRequest;
+
+public class ServerTest extends AppCompatActivity {
+    // Log tag
+    private static final String TAG = ServerTest.class.getSimpleName();
+
+    // Movies json url
+    private static final String url = "http://10.0.2.2/PHP/homepage.php";
+    private ProgressDialog pDialog;
+    private List<Movie> movieList = new ArrayList<Movie>();
+    private ListView listView;
+    private CustomListAdapter adapter;
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_server_test);
-        button_send = findViewById(R.id.btn_send);
-        editText = findViewById(R.id.et_1);
-        message_received = findViewById(R.id.tv_received);
-        message_sent = findViewById(R.id.tv_sent);
-        queue = Volley.newRequestQueue(this);
-        button_send_json=findViewById(R.id.btn_2);
-        button_send.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                StringRequest postRequest = new StringRequest(Request.Method.POST, post_url, new Response.Listener<String>() {
+        setContentView(R.layout.layout_main);
+
+        listView = (ListView) findViewById(R.id.list);
+        listView.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+
+                // selected item
+                Movie m = movieList.get(position);
+                String a = m.getTitle();
+                String b = m.getLng();
+                String c = m.getLat();
+                double d= Double.parseDouble(b);
+                Toast.makeText(getApplicationContext(),"Koordinatinız "+ d, Toast.LENGTH_LONG).show();
+                // Launching new Activity on selecting single List Item
+                Intent i = new Intent(getApplicationContext(), CamTestActivity.class);
+                // sending data to new activity
+
+                startActivity(i);
+
+            }
+        });
+        adapter = new CustomListAdapter(this, movieList);
+        listView.setAdapter(adapter);
+
+        pDialog = new ProgressDialog(this);
+        // Showing progress dialog before making http request
+        pDialog.setMessage("Loading...");
+        pDialog.show();
+
+
+        // Creating volley request obj
+        JsonArrayRequest movieReq = new JsonArrayRequest(url,
+                new Response.Listener<JSONArray>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d("Response", response);
-                        message_received.setText(response);
+                    public void onResponse(JSONArray response) {
+                        Log.d(TAG, response.toString());
+                        hidePDialog();
+
+                        // Parsing json
+                        for (int i = 0; i < response.length(); i++) {
+                            try {
+
+                                JSONObject obj = response.getJSONObject(i);
+                                Movie movie = new Movie();
+                                movie.setTitle(obj.getString("message"));
+                                movie.setThumbnailUrl(obj.getString("image_path"));
+                                movie.setRating(obj.getString("Adres"));
+                                movie.setLat(obj.getString("Latitude"));
+                                movie.setLng(obj.getString("Longtitude"));
+
+
+
+
+                                // adding movie to movies array
+                                movieList.add(movie);
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+
+                        // notifying list adapter about data changes
+                        // so that it renders the list view with updated data
+                        adapter.notifyDataSetChanged();
                     }
                 }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d("Error Response",error.toString());
-                        message_received.setText(error.toString());
-                    }
-                })
-                {
-                    protected Map<String,String> getParams(){
-                        Map <String,String> params = new HashMap<String, String>();
-                        Map <String,String> params2 = new HashMap<String, String>();
-                        params.put("name","Ömer");
-                        params.put("url","http:asdad");
-                        params.put("surname","Demir");
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d(TAG, "Error: " + error.getMessage());
+                hidePDialog();
 
-                        return params;
-
-                    }
-
-                };
-
-                queue.add(postRequest);
-                editText.setText("Pressed");
             }
         });
 
-        button_send_json.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                JSONObject main = new JSONObject();
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(movieReq);
+    }
 
-                JSONObject main2 = new JSONObject();
-                try {
-                    main.put("name","Oğuz");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    main.put("surname","Alkan");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    main.put("url","blabla");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        hidePDialog();
+    }
 
-                try {
-                    main2.put("deneme",main);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-
-                message_sent.setText(main2.toString());
-
-                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST,post_url,main2,
-                        new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.d("Response",response.toString());
-                        message_received.setText(response.toString());
-
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d("Error",error.toString());
-                        message_received.setText(error.getMessage());
-                    }
-
-                });
-                        queue.add(jsonObjectRequest);
-
-               /* queue.getCache().clear();*/
-
-
-}
-
-});
+    private void hidePDialog() {
+        if (pDialog != null) {
+            pDialog.dismiss();
+            pDialog = null;
         }
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) { switch(item.getItemId()) {
+        case R.id.add:
+            Intent i = new Intent(ServerTest.this,MapsActivity.class);
+            startActivity(i);
+
+            return(true);
+        case R.id.about:
+            Toast.makeText(getApplicationContext(), "Oğuz Alkan", Toast.LENGTH_LONG).show();
+            return(true);
+        case R.id.exit:
+            Intent k = new Intent(ServerTest.this,LoginScreen.class);
+            startActivity(k);
+            finishAffinity();
+            return(true);
+    }
+        return(super.onOptionsItemSelected(item));
+    }
+
+
+
+
+
+
 }

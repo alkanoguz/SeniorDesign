@@ -2,7 +2,9 @@ package alkanoguz.androidakademiproject;
 
 import android.Manifest;
 import android.app.Application;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -10,11 +12,13 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -37,7 +41,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String address = "";
     double lat;
     double lng;
-
+    private ProgressDialog pDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +50,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
     }
 
     @Override
@@ -112,6 +117,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
         HashMap hashMap = new HashMap();
         mMap.clear();
+        address = "";
         try {
 
             List<Address> addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
@@ -140,19 +146,73 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             e.printStackTrace();
         }
         mMap.addMarker(new MarkerOptions().position(latLng).title(address));
-        Toast.makeText(getApplicationContext(), "New Place Created", Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "Konum oluşturuldu.", Toast.LENGTH_LONG).show();
         lat = latLng.latitude;
         lng = latLng.longitude;
 
         System.out.println(latLng.latitude);
         System.out.println(latLng.longitude);
         System.out.println(address);
-        Intent intent = new Intent(this, CamTestActivity.class);
-        intent.putExtra("adres", address);
-        intent.putExtra("lat", lat);
-        intent.putExtra("lng", lng);
-        startActivity(intent);
-        finish();
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(MapsActivity.this);
 
+        // Setting Dialog Title
+        alertDialog.setTitle("Konum Onayı");
+
+        // Setting Dialog Message
+        alertDialog.setMessage("Konumu doğru seçtiniz mi?");
+
+        // Setting Icon to Dialog
+
+
+        // Setting Positive "Yes" Button
+        alertDialog.setPositiveButton("Evet", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int which) {
+                pDialog = new ProgressDialog(MapsActivity.this);
+                pDialog.setMessage("Yükleniyor...");
+                pDialog.show();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent intent = new Intent(MapsActivity.this,CamTestActivity.class);
+                        intent.putExtra("adres", address);
+                        intent.putExtra("lat", lat);
+                        intent.putExtra("lng", lng);
+                        startActivity(intent);
+                        hidePDialog();
+                    }
+                },2000);
+
+            }
+
+
+
+
+
+        });
+
+        // Setting Negative "NO" Button
+        alertDialog.setNegativeButton("Hayır", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,	int which) {
+                // Write your code here to invoke NO event
+                dialog.cancel();
+            }
+        });
+
+        // Showing Alert Message
+        alertDialog.show();
+
+
+    }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        hidePDialog();
+    }
+
+    private void hidePDialog() {
+        if (pDialog != null) {
+            pDialog.dismiss();
+            pDialog = null;
+        }
     }
 }

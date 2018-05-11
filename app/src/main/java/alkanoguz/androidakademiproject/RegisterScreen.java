@@ -3,11 +3,13 @@ package alkanoguz.androidakademiproject;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +31,9 @@ public class RegisterScreen extends Activity {
     Button btn_register;
     RequestQueue queue ;
     String register_url;
+    CheckBox checkBox;
+    boolean checked;
+    String message;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,7 +47,7 @@ public class RegisterScreen extends Activity {
                 startActivity(i);
             }
         });
-
+        checkBox = (CheckBox) findViewById(R.id.checkBox3);
         et_name = (EditText) findViewById(R.id.register_input_name);
         et_lastname = (EditText) findViewById(R.id.register_input_lastname);
         et_email = (EditText) findViewById(R.id.register_input_email);
@@ -51,7 +56,6 @@ public class RegisterScreen extends Activity {
         et_mobile_phone = (EditText) findViewById(R.id.register_input_mobile_phone);
         et_address = (EditText) findViewById(R.id.register_input_address);
         btn_register = (Button) findViewById(R.id.btn_register);
-        deneme_tv = (TextView) findViewById(R.id.deneme_tv);
 
         final Editable name= et_name.getText();
         final Editable lastname = et_lastname.getText();
@@ -61,20 +65,25 @@ public class RegisterScreen extends Activity {
         final Editable mobile_phone = et_mobile_phone.getText();
         final Editable address = et_address.getText();
 
-        int sasasa;
 
         btn_register.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String name2 = et_name.getText().toString();
-                String lastname2 = et_lastname.getText().toString();
-                String email2 = et_email.getText().toString();
-                String password2 = et_password.getText().toString();
-                String tckimlik = et_tckimlik.getText().toString();
-                String mobile_phone_2 = et_mobile_phone.getText().toString();
-                String address2 = et_address.getText().toString();
+                checked = ((CheckBox) checkBox).isChecked();
+                if (checked) {
+                    String name2 = et_name.getText().toString();
+                    String lastname2 = et_lastname.getText().toString();
+                    String email2 = et_email.getText().toString();
+                    String password2 = et_password.getText().toString();
+                    String tckimlik = et_tckimlik.getText().toString();
+                    String mobile_phone_2 = et_mobile_phone.getText().toString();
+                    String address2 = et_address.getText().toString();
 
-                registerUser(name2,lastname2,email,password,tckimlik,mobile_phone_2,address2);
+                    registerUser(name2, lastname2, email, password, tckimlik, mobile_phone_2, address2);
+                }
+                else{
+                    Toast.makeText(getApplicationContext(),"Lütfen sözleşmeyi kabul ediniz",Toast.LENGTH_LONG).show();
+                }
 
             }
         });
@@ -137,9 +146,25 @@ public class RegisterScreen extends Activity {
             @Override
             public void onResponse(JSONObject response) {
                 Log.d("Response",response.toString());
-                deneme_tv.setText(response.toString());
+                JSONObject data = response;
+                JSONObject information = new JSONObject();
+                try {
+                    message = data.getString("message");
+                } catch (JSONException e) {
+                    e.printStackTrace();
             }
-        }, new Response.ErrorListener() {
+                Toast.makeText(getApplicationContext(),"Kayıt başarılı", Toast.LENGTH_LONG).show();
+                if (message != null) {
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            Intent i = new Intent(RegisterScreen.this, ServerTest.class);
+                            startActivity(i);
+                            finish();
+                        }
+                    }, 2500);
+                }
+        }}, new Response.ErrorListener() {
 
             @Override
             public void onErrorResponse(VolleyError error) {

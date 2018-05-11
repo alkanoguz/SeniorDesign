@@ -1,56 +1,47 @@
 package alkanoguz.androidakademiproject;
 
-        import android.app.Activity;
-        import android.content.Context;
-        import android.content.ContextWrapper;
-        import android.database.Cursor;
-        import android.graphics.BitmapFactory;
-        import android.hardware.Camera;
-        import android.os.Environment;
-        import android.support.v4.app.ActivityCompat;
-        import android.support.v7.app.AppCompatActivity;
-        import android.Manifest;
-        import android.content.Intent;
-        import android.content.pm.PackageManager;
-        import android.util.Log;
-        import android.widget.Button;
-        import android.widget.ImageView;
-        import android.widget.TextView;
-        import android.widget.Toast;
+import android.Manifest;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.util.Base64;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
-        import java.io.File;
-        import java.io.FileNotFoundException;
-        import java.io.FileOutputStream;
-        import java.net.HttpURLConnection;
-        import android.graphics.Bitmap;
-        import android.os.Bundle;
-        import android.view.View;
-        import android.app.ProgressDialog;
-        import android.os.AsyncTask;
-        import android.widget.EditText;
-        import android.net.Uri;
-        import java.io.InputStreamReader;
-        import java.io.OutputStream;
-        import javax.net.ssl.HttpsURLConnection;
-        import java.io.BufferedWriter;
-        import java.nio.ByteBuffer;
-        import java.text.SimpleDateFormat;
-        import java.util.Date;
-        import java.util.Map;
-        import java.io.ByteArrayOutputStream;
-        import java.io.IOException;
-        import java.util.HashMap;
-        import java.io.OutputStreamWriter;
-        import java.net.URL;
-        import android.provider.MediaStore;
-        import java.io.BufferedReader;
-        import java.net.URLEncoder;
-        import java.io.UnsupportedEncodingException;
-        import android.util.Base64;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
-        import org.w3c.dom.Text;
-
-        import static alkanoguz.androidakademiproject.AppController.TAG;
+import javax.net.ssl.HttpsURLConnection;
 
 public class CamTestActivity extends Activity {
     private static final String TAG = "CamTestActivity";
@@ -66,26 +57,28 @@ public class CamTestActivity extends Activity {
     HashMap hashMap;
     String ImagePathFieldOnServer = "image_path" ;
     TextView textView;
-    String adres;
+    String adres = "";
     double lat;
     double lng;
     String lats;
     String lngs;
     EditText editText;
     String mesaj;
+    String uid;
     HashMap<String,String> HashMapParams = new HashMap<String,String>();
+    SharedPreferences pref;
 
-
-    String ImageUploadPathOnSever ="http://192.168.1.5/php/upload.php" ;
+    String ImageUploadPathOnSever = "http://10.0.2.2/PHP/upload.php";
     String filePath;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        pref = getApplicationContext().getSharedPreferences("MyPref", 0);
+
         this.imageView = (ImageView) this.findViewById(R.id.imageView);
         Button photoButton = (Button) this.findViewById(R.id.button);
         UploadImageToServer = (Button) findViewById(R.id.button2);
-        Button mapsButton = this.findViewById(R.id.button4);
         Button SelectImageGallery = this.findViewById(R.id.button3);
         textView = this.findViewById(R.id.textView);
         editText = this.findViewById(R.id.editText);
@@ -100,17 +93,10 @@ public class CamTestActivity extends Activity {
 
 
 
-            textView.setText(adres+"\n"+lats+"\n"+lngs);
+            textView.setText(adres);
         }
         EnableRuntimePermissionToAccessCamera();
-        mapsButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
 
-                Intent mapIntent = new Intent(getApplicationContext(),MapsActivity.class);
-                startActivityForResult(mapIntent,49);
-            }
-        });
 
 
 
@@ -144,9 +130,17 @@ public class CamTestActivity extends Activity {
                     ImageUploadToServerFunction();
                     imageView.setImageBitmap(null);
                     bmp = null;
-                    textView = null;
-                    editText = null;
-
+                    textView.setText(null);
+                    editText.setText(null);
+                    Toast.makeText(getApplicationContext(), "Şikayetiniz iletildi teşekkürler!", Toast.LENGTH_LONG).show();
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            Intent i = new Intent(CamTestActivity.this,ServerTest.class);
+                            startActivity(i);
+                            finish();
+                        }
+                    },1800);
             }}
         });
         SelectImageGallery.setOnClickListener(new View.OnClickListener() {
@@ -279,7 +273,8 @@ public class CamTestActivity extends Activity {
                 String date = dateFormat.format(new Date());
 
                 ImageProcessClass imageProcessClass = new ImageProcessClass();
-
+                uid= pref.getString("uid","0");
+                HashMapParams.put("uid",uid);
                 HashMapParams.put("adres",adres);
                 HashMapParams.put("Latitude",lats);
                 HashMapParams.put("Longtitude",lngs);

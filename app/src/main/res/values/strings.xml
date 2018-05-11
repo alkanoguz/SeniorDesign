@@ -11,7 +11,8 @@
     <!-- Toast Messages -->
     <string name="camera_not_found">No camera harware found</string>
     <string name="take_photo_help">Touch anywhere on screen to take picture</string>
-    <string name="register_url">"http://192.168.1.2:8080/php/register.php"</string>
-    <string name="login_url">"http://192.168.1.2:8080/php/login.php"</string>
+    <string name="register_url">"http://10.0.2.2/PHP/register.php"</string>
+    <string name="login_url">"http://10.0.2.2/PHP/login.php"</string>
+    <string name="upload_url">"http://10.0.2.2/PHP/upload.php"</string>
     <string name="title_activity_maps">Map</string>
 </resources>

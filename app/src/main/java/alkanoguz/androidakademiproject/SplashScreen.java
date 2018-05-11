@@ -11,27 +11,23 @@ import android.os.Handler;
 
 public class SplashScreen extends Activity {
     public static int SPLASH_TIME_OUT = 3000;
-    SharedPreferences preferences ;
+    SharedPreferences pref;
+    boolean login_status = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        preferences  = getApplicationContext().getSharedPreferences("User",0);
-        boolean login_status = preferences.getBoolean("is_login",false);
+        /*pref = getApplicationContext().getSharedPreferences("MyPref", 0);
+        boolean login_status = pref.getBoolean("is_login", false);
+        String name = pref.getString("name",null); */
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash_screen);
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Intent i = new Intent(SplashScreen.this,LoginScreen.class);
-                startActivity(i);
-                finish();
-            }
-        },SPLASH_TIME_OUT);
-        /*if (login_status==true){
+        if (login_status){
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Intent i = new Intent(SplashScreen.this,Companies.class);
+                    Intent i = new Intent(SplashScreen.this,CamTestActivity.class);
                     startActivity(i);
                     finish();
                 }
@@ -51,7 +47,7 @@ public class SplashScreen extends Activity {
 
         }
 
-       */
+
     }
 }
 
